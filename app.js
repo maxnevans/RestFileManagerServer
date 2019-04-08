@@ -1,35 +1,106 @@
 const express = require("express");
+const Busboy = require("busboy");
 
 let app = express();
 
-app.get('/', (req, res) => {
-    console.log("get");
-    res.end("get");
+app.disable("x-powered-by");
+
+app.use(function(req, res, next)
+{
+    console.log("Connection...");
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods", "*");
+    next();
 });
 
-app.post('/', (req, res) => {
-    console.log("post");
-    res.end("post");
+app.use(function(req, res, next)
+{
+    if (req.method != "OPTIONS" && req.method != "GET")
+    {
+        const busboy = new Busboy({headers: req.headers});
+
+        if (!req.body) req.body = {};
+    
+        busboy.on('field', (fieldname, value) => 
+        {
+            req.body[fieldname] = value;
+        });
+    
+        busboy.on('finish', () =>
+        {
+            handleRESTRequest(req.body, req.method)
+            .then((answer) => 
+            {
+                res.end(answer);
+            })
+            .catch((error) =>
+            {
+                res.end(error);
+            });
+            
+        });
+    
+        req.pipe(busboy);
+    }
+    next();
 });
 
-app.delete('/', (req, res) => {
-    console.log("delete");
-    res.end("delete");
+app.get('/**', (req, res) => 
+{
+    handleRESTRequest(req.query, 'GET')
+    .then((answer) => 
+    {
+        res.end(answer);
+    })
+    .catch((error) =>
+    {
+        res.end(error);
+    });
+    
 });
+app.post('/**', () => {});
+app.put('/**', () => {});
+app.delete('/**', () => {});
+app.copy('/**', () => {});
+app.move('/**', () => {});
 
-app.put('/', (req, res) => {
-    console.log("put");
-    res.end("put");
-});
+function handleRESTRequest(data, method)
+{
+    return new Promise((resolve, reject) =>
+    {
+        switch(method)
+        {
+            case "GET":
+                console.log('GET');
 
-app.copy('/', (req, res) => {
-    console.log("copy");
-    res.end("copy");
-});
+                break;
+            case "POST":
+                console.log('POST');
 
-app.move('/', (req, res) => {
-    console.log("move");
-    res.end("move");
-});
+                break;
+            case "PUT":
+                console.log('PUT');
+
+                break;
+            case "DELETE":
+                console.log('DELETE');
+
+                break;
+            case "COPY":
+                console.log('COPY');
+
+                break;
+            case "MOVE":
+                console.log('MOVE');
+                
+                break;
+            default:
+                reject("Undefined method");
+        }
+        resolve(method);
+    });
+}
+
 
 app.listen(80);
