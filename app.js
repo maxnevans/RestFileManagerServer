@@ -1,5 +1,6 @@
 const express = require("express");
 const Busboy = require("busboy");
+const fs = require("fs");
 
 let app = express();
 
@@ -16,6 +17,7 @@ app.use(function(req, res, next)
 
 app.use(function(req, res, next)
 {
+
     if (req.method != "OPTIONS" && req.method != "GET")
     {
         const busboy = new Busboy({headers: req.headers});
@@ -36,13 +38,17 @@ app.use(function(req, res, next)
             })
             .catch((error) =>
             {
-                res.end(error);
+                let strError = JSON.stringify({
+                    error : error.toString()
+                });
+                res.end(strError);
             });
             
         });
     
         req.pipe(busboy);
     }
+    
     next();
 });
 
@@ -55,7 +61,7 @@ app.get('/**', (req, res) =>
     })
     .catch((error) =>
     {
-        res.end(error);
+        res.end(error.toString());
     });
     
 });
@@ -73,32 +79,110 @@ function handleRESTRequest(data, method)
         {
             case "GET":
                 console.log('GET');
-
+                fs.readFile(data['file_name'], (err, content) => 
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been read',
+                            fileContent : content.toString()
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             case "POST":
                 console.log('POST');
-
+                fs.appendFile(data['file_name'], data['file_content'],  (err) => 
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been appended'
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             case "PUT":
                 console.log('PUT');
-
+                fs.writeFile(data['file_name'], data['file_content'],  (err) => 
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been written'
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             case "DELETE":
                 console.log('DELETE');
-
+                fs.unlink(data['file_name'], (err) =>
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been deleted'
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             case "COPY":
                 console.log('COPY');
-
+                fs.copyFile(data['file_name'], data['copy_name'], (err) =>
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been copied'
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             case "MOVE":
                 console.log('MOVE');
-                
+                fs.rename(data['file_name'], data['new_name'], (err) =>
+                {
+                    if (err)
+                    {
+                        reject(err);
+                    }
+                    else
+                    {
+                        let response = JSON.stringify({
+                            success : 'file has been moved'
+                        });
+                        resolve(response);
+                    }
+                });
                 break;
             default:
                 reject("Undefined method");
         }
-        resolve(method);
     });
 }
 
