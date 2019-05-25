@@ -61,7 +61,10 @@ app.get('/**', (req, res) =>
     })
     .catch((error) =>
     {
-        res.end(error.toString());
+        let strError = JSON.stringify({
+            error: error.toString()
+        });
+        res.end(strError);
     });
     
 });
@@ -70,6 +73,8 @@ app.put('/**', () => {});
 app.delete('/**', () => {});
 app.copy('/**', () => {});
 app.move('/**', () => {});
+
+
 
 function handleRESTRequest(data, method)
 {
